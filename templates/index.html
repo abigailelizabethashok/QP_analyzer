@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AI Question Paper Analyzer</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <header>
+
+        <div class="logo">
+            🧠
+        </div>
+
+        <h1>
+            AI Question Paper Analyzer
+        </h1>
+
+        <p>
+            Analyze syllabus coverage, difficulty,
+            repetition, marks distribution and
+            Bloom's Taxonomy.
+        </p>
+
+    </header>
+
+
+    <div class="card">
+
+        <h2>📚 Enter Syllabus</h2>
+
+        <textarea
+            id="syllabus"
+            placeholder="Example:
+
+Module 1:
+Introduction to Artificial Intelligence
+Intelligent Agents
+Problem Solving
+
+Module 2:
+Search Algorithms
+BFS
+DFS
+A*
+
+Module 3:
+Machine Learning
+Supervised Learning
+Unsupervised Learning
+">
+        </textarea>
+
+
+        <h2>📝 Question Paper</h2>
+
+        <textarea
+            id="question_paper"
+            placeholder="Paste your question paper here...
+
+Example:
+
+1. Define Artificial Intelligence. (2 marks)
+
+2. Explain intelligent agents. (5 marks)
+
+3. Explain BFS and DFS with examples. (7 marks)
+
+4. Compare supervised and unsupervised learning. (5 marks)
+">
+        </textarea>
+
+
+        <div class="upload">
+
+            <p>
+                OR upload your question paper as PDF
+            </p>
+
+            <input
+                type="file"
+                id="pdfFile"
+                accept=".pdf">
+
+        </div>
+
+
+        <button onclick="analyzePaper()">
+
+            🔍 Analyze Question Paper
+
+        </button>
+
+    </div>
+
+
+    <div id="loading" class="loading">
+
+        🤖 AI is analyzing your question paper...
+
+    </div>
+
+
+    <div id="results">
+
+        <div class="score-card">
+
+            <h2>Overall Paper Score</h2>
+
+            <div id="score">
+                --
+            </div>
+
+            <p>
+                / 100
+            </p>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>📊 Summary</h2>
+
+            <p id="summary"></p>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>📚 Syllabus Coverage</h2>
+
+            <div class="percentage"
+                 id="coverage">
+                0%
+            </div>
+
+            <h3>Covered Topics</h3>
+
+            <ul id="coveredTopics"></ul>
+
+            <h3>Missing Topics</h3>
+
+            <ul id="missingTopics"></ul>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>🎯 Difficulty Distribution</h2>
+
+            <div class="stats">
+
+                <div>
+                    <strong id="easy">0%</strong>
+                    <span>Easy</span>
+                </div>
+
+                <div>
+                    <strong id="medium">0%</strong>
+                    <span>Medium</span>
+                </div>
+
+                <div>
+                    <strong id="hard">0%</strong>
+                    <span>Hard</span>
+                </div>
+
+            </div>
+
+            <p id="difficultyComment"></p>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>🔁 Repetition Analysis</h2>
+
+            <ul id="repeatedQuestions"></ul>
+
+            <p id="repetitionComment"></p>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>📊 Marks Distribution</h2>
+
+            <div id="marksDistribution"></div>
+
+            <p id="marksComment"></p>
+
+        </div>
+
+
+        <div class="result-card">
+
+            <h2>🧠 Bloom's Taxonomy</h2>
+
+            <div class="bloom-grid">
+
+                <div>
+                    <strong id="remember">0%</strong>
+                    <span>Remember</span>
+                </div>
+
+                <div>
+                    <strong id="understand">0%</strong>
+                    <span>Understand</span>
+                </div>
+
+                <div>
+                    <strong id="apply">0%</strong>
+                    <span>Apply</span>
+                </div>
+
+                <div>
+                    <strong id="analyze">0%</strong>
+                    <span>Analyze</span>
+                </div>
+
+                <div>
+                    <strong id="evaluate">0%</strong>
+                    <span>Evaluate</span>
+                </div>
+
+                <div>
+                    <strong id="create">0%</strong>
+                    <span>Create</span>
+                </div>
+
+            </div>
+
+            <p id="bloomComment"></p>
+
+        </div>
+
+
+        <div class="result-card problems">
+
+            <h2>⚠️ Problems Found</h2>
+
+            <ul id="problems"></ul>
+
+        </div>
+
+
+        <div class="result-card suggestions">
+
+            <h2>💡 AI Suggestions</h2>
+
+            <ul id="suggestions"></ul>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function analyzePaper() {
+
+    const syllabus =
+        document.getElementById("syllabus").value;
+
+    const questionPaper =
+        document.getElementById("question_paper").value;
+
+    const pdfFile =
+        document.getElementById("pdfFile").files[0];
+
+
+    if (!syllabus.trim()) {
+
+        alert("Please enter the syllabus.");
+
+        return;
+    }
+
+
+    if (!questionPaper.trim() && !pdfFile) {
+
+        alert(
+            "Please paste the question paper or upload a PDF."
+        );
+
+        return;
+    }
+
+
+    document.getElementById("loading")
+        .style.display = "block";
+
+
+    document.getElementById("results")
+        .style.display = "none";
+
+
+    const formData = new FormData();
+
+    formData.append(
+        "syllabus",
+        syllabus
+    );
+
+
+    formData.append(
+        "question_paper",
+        questionPaper
+    );
+
+
+    if (pdfFile) {
+
+        formData.append(
+            "file",
+            pdfFile
+        );
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/analyze",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "Something went wrong."
+            );
+
+        }
+
+
+        displayResults(data);
+
+
+    }
+
+    catch (error) {
+
+        alert(
+            "Error: " +
+            error.message
+        );
+
+    }
+
+    finally {
+
+        document.getElementById("loading")
+            .style.display = "none";
+
+    }
+
+}
+
+
+function displayResults(data) {
+
+    document.getElementById("results")
+        .style.display = "block";
+
+
+    document.getElementById("score")
+        .textContent =
+        data.overall_score;
+
+
+    document.getElementById("summary")
+        .textContent =
+        data.summary;
+
+
+    document.getElementById("coverage")
+        .textContent =
+        data.syllabus_coverage.coverage_percentage
+        + "%";
+
+
+    createList(
+        "coveredTopics",
+        data.syllabus_coverage.covered_topics
+    );
+
+
+    createList(
+        "missingTopics",
+        data.syllabus_coverage.missing_topics
+    );
+
+
+    document.getElementById("easy")
+        .textContent =
+        data.difficulty.easy + "%";
+
+
+    document.getElementById("medium")
+        .textContent =
+        data.difficulty.medium + "%";
+
+
+    document.getElementById("hard")
+        .textContent =
+        data.difficulty.hard + "%";
+
+
+    document.getElementById("difficultyComment")
+        .textContent =
+        data.difficulty.comment;
+
+
+    createList(
+        "repeatedQuestions",
+        data.repetition.repeated_questions
+    );
+
+
+    document.getElementById("repetitionComment")
+        .textContent =
+        data.repetition.comment;
+
+
+    document.getElementById("marksDistribution")
+        .innerHTML =
+        JSON.stringify(
+            data.marks_distribution.distribution,
+            null,
+            2
+        );
+
+
+    document.getElementById("marksComment")
+        .textContent =
+        data.marks_distribution.comment;
+
+
+    document.getElementById("remember")
+        .textContent =
+        data.blooms_taxonomy.Remember + "%";
+
+
+    document.getElementById("understand")
+        .textContent =
+        data.blooms_taxonomy.Understand + "%";
+
+
+    document.getElementById("apply")
+        .textContent =
+        data.blooms_taxonomy.Apply + "%";
+
+
+    document.getElementById("analyze")
+        .textContent =
+        data.blooms_taxonomy.Analyze + "%";
+
+
+    document.getElementById("evaluate")
+        .textContent =
+        data.blooms_taxonomy.Evaluate + "%";
+
+
+    document.getElementById("create")
+        .textContent =
+        data.blooms_taxonomy.Create + "%";
+
+
+    document.getElementById("bloomComment")
+        .textContent =
+        data.blooms_taxonomy.comment;
+
+
+    createList(
+        "problems",
+        data.problems
+    );
+
+
+    createList(
+        "suggestions",
+        data.suggestions
+    );
+
+}
+
+
+function createList(
+    elementId,
+    items
+) {
+
+    const list =
+        document.getElementById(
+            elementId
+        );
+
+
+    list.innerHTML = "";
+
+
+    if (!items ||
+        items.length === 0) {
+
+        const li =
+            document.createElement("li");
+
+        li.textContent =
+            "None found.";
+
+        list.appendChild(li);
+
+        return;
+    }
+
+
+    items.forEach(
+        item => {
+
+            const li =
+                document.createElement("li");
+
+            li.textContent =
+                typeof item === "string"
+                    ? item
+                    : JSON.stringify(item);
+
+            list.appendChild(li);
+
+        }
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
